@@ -1,5 +1,10 @@
 import tensorflow as tf
-import  keras.models as models
+#import  keras.models as models
+from tensorflow.keras import *
+
+#from tensorflow import keras
+#from tensorflow.keras.model import Model
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,8 +18,8 @@ content_layers = ['block5_conv2']
 style_layers = ['block1_conv1',
                 'block2_conv1',
                 'block3_conv1', 
-                'block4_conv1', 
-		 'block5_conv1'
+                'block4_conv1',
+                'block5_conv1'
                ]
 
 num_content_layers = len(content_layers)
