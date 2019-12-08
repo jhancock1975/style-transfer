@@ -14,10 +14,9 @@
 # 
 # Most of the code is from [this notebook](https://nbviewer.jupyter.org/github/fchollet/deep-learning-with-python-notebooks/blob/master/8.3-neural-style-transfer.ipynb). I first read [this blog post](https://medium.com/tensorflow/neural-style-transfer-creating-art-with-deep-learning-using-tf-keras-and-eager-execution-7d541ac31398) and then read [the original paper](https://arxiv.org/abs/1508.06576). I haven't done the [FastAI course yet](https://course.fast.ai/) but [this lesson](https://course.fast.ai/lessons/lesson13.html) has some relevant material.
 
-# In[ ]:
-
-
+# this code take from:
 # https://github.com/keras-team/keras/blob/master/examples/neural_style_transfer.py
+
 from __future__ import print_function
 from keras.preprocessing.image import load_img, save_img, img_to_array
 import numpy as np
@@ -29,7 +28,10 @@ from tensorflow.losses import *
 from keras.applications import vgg19
 from keras import backend as K
 from glob import glob
+import logging
 
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+logging.info('starting up')
 
 # ## Getting some images
 
@@ -77,7 +79,7 @@ print(listdir(directory))
 from IPython.display import Image
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-get_ipython().run_line_magic('matplotlib', 'inline')
+# get_ipython().run_line_magic('matplotlib', 'inline')
 
 # function to display list of images
 def display_images(image_paths):
@@ -87,7 +89,7 @@ def display_images(image_paths):
         plt.subplot(len(image_paths) / columns + 1, columns, i + 1)
         plt.imshow(mpimg.imread(image))    
         
-display_images(list(map(lambda img: directory + "/" + img, img_urls.keys())))
+#display_images(list(map(lambda img: directory + "/" + img, img_urls.keys())))
     
 
 
@@ -281,8 +283,8 @@ def loss1(base_image, style_reference_image, combination_image):
     layer_features = outputs_dict['block5_conv2']
     base_image_features = layer_features[0, :, :, :]
     combination_features = layer_features[2, :, :, :]
-    loss += content_weight * content_loss(base_image_features,
-                                          combination_features)
+    loss.assign_add(content_weight * content_loss(base_image_features,
+                                          combination_features))
 
     feature_layers = [f'block{i}_conv{j}' for i in range(4, 6) for j in range(1, 5)]
     for layer_name in feature_layers:
@@ -290,8 +292,8 @@ def loss1(base_image, style_reference_image, combination_image):
         style_reference_features = layer_features[1, :, :, :]
         combination_features = layer_features[2, :, :, :]
         sl = style_loss(style_reference_features, combination_features)
-        loss += (style_weight / len(feature_layers)) * sl
-    loss += total_variation_weight * total_variation_loss(combination_image)
+        loss.assign_add( (style_weight / len(feature_layers)) * sl)
+    loss.assign_add(total_variation_weight * total_variation_loss(combination_image))
     return loss
 
 
@@ -335,9 +337,12 @@ def style_transfer(base_image_path,
     if isinstance(grads, (list, tuple)):
         outputs += grads
     else:
-        outputs.append(grads)
+        outputs += grads
 
-    f_outputs = K.function([combination_image], outputs)
+    logging.debug(outputs)
+    logging.debug(dir(combination_image))
+
+    f_outputs = K.function([combination_image], tf.convert_to_tensor(outputs))
 
     evaluator = Evaluator(f_outputs, img_nrows, img_ncols)
 
@@ -418,8 +423,8 @@ def loss2(base_image, style_reference_image, combination_image):
     layer_features = outputs_dict['block5_conv2']
     base_image_features = layer_features[0, :, :, :]
     combination_features = layer_features[2, :, :, :]
-    loss += content_weight * content_loss(base_image_features,
-                                          combination_features)
+    loss.assign_add(content_weight * content_loss(base_image_features,
+                                          combination_features))
 
     # https://www.kaggle.com/pradhyo/keras-style-transfer-different-losses
     feature_layers = [f'block{i}_conv{j}' for i in range(4, 6) for j in range(1, 5)]
@@ -429,8 +434,8 @@ def loss2(base_image, style_reference_image, combination_image):
         style_reference_features = layer_features[1, :, :, :]
         combination_features = layer_features[2, :, :, :]
         sl = style_loss(style_reference_features, combination_features)
-        loss += (style_weight / len(feature_layers)) * sl
-    loss += total_variation_weight * total_variation_loss(combination_image)  
+        loss.assign_add( (style_weight / len(feature_layers)) * sl)
+    loss.assign_add(total_variation_weight * total_variation_loss(combination_image)  )
     return loss
 
 
