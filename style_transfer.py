@@ -114,8 +114,8 @@ content_image_features = layer_features[0, :, :, :]
 combination_features = layer_features[2, :, :, :]
 
 loss = backend.variable(0.)
-loss += CONTENT_WEIGHT * content_loss(content_image_features,
-                                      combination_features)
+loss.assign_add(CONTENT_WEIGHT * content_loss(content_image_features,
+                                      combination_features))
 
 
 # In[9]:
@@ -142,7 +142,7 @@ for layer_name in style_layers:
     style_features = layer_features[1, :, :, :]
     combination_features = layer_features[2, :, :, :]
     style_loss = compute_style_loss(style_features, combination_features)
-    loss += (STYLE_WEIGHT / len(style_layers)) * style_loss
+    loss.assign_add((STYLE_WEIGHT / len(style_layers)) * style_loss)
 
 
 # In[11]:
@@ -153,7 +153,7 @@ def total_variation_loss(x):
     b = backend.square(x[:, :IMAGE_HEIGHT-1, :IMAGE_WIDTH-1, :] - x[:, :IMAGE_HEIGHT-1, 1:, :])
     return backend.sum(backend.pow(a + b, TOTAL_VARIATION_LOSS_FACTOR))
 
-loss += TOTAL_VARIATION_WEIGHT * total_variation_loss(combination_image)
+loss.assign_add( TOTAL_VARIATION_WEIGHT * total_variation_loss(combination_image))
 
 
 # In[12]:
